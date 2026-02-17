@@ -22,6 +22,45 @@ import {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Fetch the best backdrop image path as thumbnail from TMDB images API.
+ * Priority: zh backdrop > en backdrop > null language backdrop > first backdrop > backdrop_path > poster_path
+ */
+async function fetchThumb(
+  tmdbId: number,
+  mediaType: "movie" | "tv",
+  backdropPath?: string | null,
+  posterPath?: string | null
+): Promise<string | null> {
+  try {
+    const result =
+      mediaType === "movie"
+        ? await tmdb.GET(`/3/movie/${tmdbId}/images`, {
+            params: { path: { movie_id: tmdbId } },
+          })
+        : await tmdb.GET(`/3/tv/${tmdbId}/images`, {
+            params: { path: { series_id: tmdbId } },
+          });
+
+    const backdrops = result.data?.backdrops;
+
+    if (backdrops?.length) {
+      const thumb =
+        backdrops.find((b) => b.iso_639_1 === "zh")?.file_path ||
+        backdrops.find((b) => b.iso_639_1 === "en")?.file_path ||
+        backdrops.find((b) => b.iso_639_1 === null)?.file_path ||
+        backdrops[0]?.file_path;
+
+      if (thumb) return thumb;
+    }
+
+    return backdropPath || posterPath || null;
+  } catch (error) {
+    console.error(`Failed to fetch images for ${mediaType}/${tmdbId}:`, error);
+    return backdropPath || posterPath || null;
+  }
+}
+
+/**
  * Deduplicate content items by tmdbId, keeping the latest one
  */
 function deduplicateByTmdbId(items: ContentItem[]): ContentItem[] {
@@ -81,6 +120,12 @@ export async function crawlDoubanMovies() {
 
     if (tmdbData) {
       const tmdbId = tmdbData.id as number;
+      const thumb = await fetchThumb(
+        tmdbId,
+        "movie",
+        tmdbData.backdrop_path,
+        tmdbData.poster_path
+      );
 
       results.push({
         title: item.title,
@@ -92,6 +137,7 @@ export async function crawlDoubanMovies() {
         media_type: "movie",
         release_date: (tmdbData as any)?.release_date || null,
         overview: tmdbData?.overview,
+        thumb,
         crawledAt: new Date().toISOString(),
       });
       console.log(`✅ ${tmdbId}`);
@@ -133,6 +179,12 @@ export async function crawlDoubanTVSeries() {
 
     if (tmdbData) {
       const tmdbId = tmdbData.id as number;
+      const thumb = await fetchThumb(
+        tmdbId,
+        "tv",
+        tmdbData.backdrop_path,
+        tmdbData.poster_path
+      );
 
       results.push({
         title: item.title,
@@ -144,6 +196,7 @@ export async function crawlDoubanTVSeries() {
         media_type: "tv",
         first_air_date: (tmdbData as any).first_air_date,
         overview: tmdbData?.overview,
+        thumb,
         crawledAt: new Date().toISOString(),
       });
       console.log(`✅ ${tmdbId}`);
@@ -185,6 +238,12 @@ export async function crawlDoubanAnimation() {
 
     if (tmdbData) {
       const tmdbId = tmdbData.id as number;
+      const thumb = await fetchThumb(
+        tmdbId,
+        "tv",
+        tmdbData.backdrop_path,
+        tmdbData.poster_path
+      );
 
       results.push({
         title: item.title,
@@ -196,7 +255,7 @@ export async function crawlDoubanAnimation() {
         media_type: "tv",
         first_air_date: (tmdbData as any).first_air_date,
         overview: tmdbData?.overview,
-
+        thumb,
         crawledAt: new Date().toISOString(),
       });
       console.log(`✅ ${tmdbId}`);
@@ -238,6 +297,12 @@ export async function crawlDoubanHotVarietyShows() {
 
     if (tmdbData) {
       const tmdbId = tmdbData.id as number;
+      const thumb = await fetchThumb(
+        tmdbId,
+        "tv",
+        tmdbData.backdrop_path,
+        tmdbData.poster_path
+      );
 
       results.push({
         title: item.title,
@@ -249,6 +314,7 @@ export async function crawlDoubanHotVarietyShows() {
         media_type: "tv",
         first_air_date: (tmdbData as any).first_air_date,
         overview: tmdbData?.overview,
+        thumb,
         crawledAt: new Date().toISOString(),
       });
       console.log(`✅ ${tmdbId}`);
@@ -290,6 +356,12 @@ export async function crawlBangumiAnimation() {
 
     if (tmdbData) {
       const tmdbId = tmdbData.id as number;
+      const thumb = await fetchThumb(
+        tmdbId,
+        "tv",
+        tmdbData.backdrop_path,
+        tmdbData.poster_path
+      );
 
       results.push({
         title: item.title,
@@ -301,6 +373,7 @@ export async function crawlBangumiAnimation() {
         media_type: "tv",
         first_air_date: (tmdbData as any).first_air_date,
         overview: tmdbData?.overview,
+        thumb,
         crawledAt: new Date().toISOString(),
       });
       console.log(`✅ ${tmdbId}`);
