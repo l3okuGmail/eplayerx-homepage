@@ -618,6 +618,63 @@ tmdbApp.get("/discover/tv", async (c) => {
   return c.json(result.data);
 });
 
+tmdbApp.get("/person/details", async (c) => {
+  const id = c.req.query("id") || "";
+  const language = c.req.query("language") || "en";
+  const result = await tmdb.GET(`/3/person/${Number(id)}`, {
+    params: {
+      query: {
+        language,
+      },
+      path: {
+        person_id: Number(id),
+      },
+    },
+  });
+  if (result.response.status !== 200) {
+    return c.json({ error: result.error }, 500);
+  }
+  return c.json(result.data);
+});
+
+tmdbApp.get("/person/movie_credits", async (c) => {
+  const id = c.req.query("id") || "";
+  const language = c.req.query("language") || "en";
+  const result = await tmdb.GET(`/3/person/${Number(id)}/movie_credits`, {
+    params: {
+      query: {
+        language,
+      },
+      path: {
+        person_id: Number(id),
+      },
+    },
+  });
+  if (result.response.status !== 200) {
+    return c.json({ error: result.error }, 500);
+  }
+  return c.json(result.data);
+});
+
+tmdbApp.get("/person/tv_credits", async (c) => {
+  const id = c.req.query("id") || "";
+  const language = c.req.query("language") || "en";
+  const result = await tmdb.GET(`/3/person/${Number(id)}/tv_credits`, {
+    params: {
+      query: {
+        language,
+      },
+      path: {
+        person_id: Number(id),
+      },
+    },
+  });
+  if (result.response.status !== 200) {
+    return c.json({ error: result.error }, 500);
+  }
+  return c.json(result.data);
+});
+
 tmdbApp.get("/image/*", async (c) => {
   const url = new URL(c.req.url);
   const match = url.pathname.match(/\/image\/(.+)/);
